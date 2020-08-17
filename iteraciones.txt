@@ -1,0 +1,37 @@
+
+
+https://www.udemy.com/course/learn-react-native-by-building-a-chat-app/learn/lecture/15499824#overview
+
+-------------
+este fue el que sirvio
+------------------------
+https://github.com/FaridSafi/react-native-gifted-chat/blob/master/example-slack-message
+
+expo init chatReactNative
+cd chatReactNative
+npm run start
+
+//expo init -t expo-template-blank-typescript
+
+
+npm i --save express mongojs nodemon react-native-gifted-chat socket.io emoji-utils
+
+
+
+https://www.npmjs.com/package/socket.io-client
+
+https://getstream.io/blog/tutorial-use-gifted-chat-ui-with-react-native/
+
+
+---------------------
+Como enviar mensajes
+---------------------
+
+https://www.npmjs.com/package/react-native-gifted-chat
+
+----------------
+cors
+----------------------
+https://riptutorial.com/es/node-js/example/28740/habilitar-cors-en-express-js
+
+
