@@ -9,6 +9,7 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "@react-native-community/async-storage": "^1.12.1",
     "emoji-utils": "^1.0.1",
     "expo": "~38.0.8",
     "expo-status-bar": "^1.0.2",

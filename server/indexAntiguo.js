@@ -10,8 +10,8 @@ var app = express();
 var server = http.Server(app);
 var websocket = socketio(server);
 server.listen(3000, () => console.log('listening on: '+':3000'))
-var clients = []
-var users = []
+var clients = {} //[]
+var users = {} //[]
 var chatId = 1;
 
 websocket.on('connection',(socket)=>{
@@ -28,9 +28,12 @@ function onUserJoined(userId, socket){
                 users[socket.id] = user._id;
                 _sendExistingMessages(socket)
             })
+        }else{
+            users[socket.id] = userId;
+            _sendExistingMessages(socket)
         }
     }catch(error){
-        console.log(error)
+        console.err(error)
     }
 }
 
@@ -38,6 +41,7 @@ function onMessageReceived(message, senderSocket){
     var userId = users[senderSocket.id];
     if(!userId) return;
     console.log('onMessageReceive')
+    _sendAndSaveMessage(message, senderSocket)
 }
 
 function _sendExistingMessages(socket){
@@ -57,17 +61,18 @@ function _sendAndSaveMessage(message, socket, fromServer){
         createdAt: new Date(message, createdAt),
         chatId: chatId
     }
+
     db.collection('messages').insert(messageData, (err,message)=>{
         var emitter = fromServer ? websocket : socket.broadcast;
         emitter.emit('message',[message]);
     })
 
     var stdin = process.openStdin();
-    stdin.addListener('data', function(){
+    stdin.addListener('data', function(d){
         _sendAndSaveMessage({
             text: d.toString().trim(),
             createdAt: new Date(),
             user: {_id: 'robot'}
-        }, null, true)
-    })
+        })
+    }, null, true)
 }

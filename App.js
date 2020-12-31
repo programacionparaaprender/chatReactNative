@@ -1,104 +1,87 @@
-import React from 'react'
-import { Platform } from 'react-native'
-import PropTypes from 'prop-types'
-import { GiftedChat } from 'react-native-gifted-chat'
-import emojiUtils from 'emoji-utils'
+import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 
-import SlackMessage from './SlackMessage'
 //import SocketIOClient from  'sockect.io-client'
 import io from 'socket.io-client';
 
+import { GiftedChat } from 'react-native-gifted-chat'
 
-export default class App extends React.Component {
-  state = {
-    messages: [],
-    userId: null
-  }
+const USER_ID = '@userId'
+
+export default class Main extends React.Component{
   constructor(props){
     super(props);
-    this.socket = io('http://localhost:3000');
-    
-    this.socket.on('connect', function(){
-      console.log('se realizo la conección.')
-    });
-    this.socket.on('chat', function(data){
-      /* feedback.innerHTML = '';
-      output.innerHTML += '<p><strong>' + data.baslik + ': </strong>' + data.mesaj + '</p>'; */
-      console.log('data:'+JSON.stringify(data))
-    });
-  }
-  componentDidMount() {
-    this.setState({
-      messages: [
-        {
-          _id: 1,
-          text: 'Hello developer!!!',
-          createdAt: new Date(),
-          user: {
-            _id: 2,
-            name: 'React Native',
-            avatar: 'https://placeimg.com/140/140/any',
-          },
-        },
-      ],
-    })
-    
-  }
-
-  onSend(messages = []) {
-    /* this.setState(previousState => ({
-      messages: GiftedChat.append(previousState.messages, messages),
-    })) */
-    this.socket.emit('chat', {
-      mesaj: 'mesaj.value',
-      baslik: 'baslik.value'
-    });
-  }
-
-  renderMessage(props) {
-    const {
-      currentMessage: { text: currText },
-    } = props
-
-    let messageTextStyle
-
-    // Make "pure emoji" messages much bigger than plain text.
-    if (currText && emojiUtils.isPureEmojiString(currText)) {
-      messageTextStyle = {
-        fontSize: 28,
-        // Emoji get clipped if lineHeight isn't increased; make it consistent across platforms.
-        lineHeight: Platform.OS === 'android' ? 34 : 30,
-      }
+    this.state = {
+      messages:[],
+      userId: null
     }
+    this.determineUser = this.determineUser.bind(this)
+    this.onReceivedMessage = this.onReceivedMessage.bind(this);
+    this.onSend = this.onSend.bind(this);
+    this._storeMessages = this._storeMessages.bind(this)
 
-    return <SlackMessage {...props} messageTextStyle={messageTextStyle} />
+    //this.sockect = SocketIOClient('http://localhost:3000');
+    this.socket = io('http://localhost:3000');
+    /* this.socket.on('connect', function(){
+      console.log('cliente conectado.')
+    }); */
+    this.socket.on('message', this.onReceivedMessage)
+    this.determineUser();
   }
-
-  render() {
-    /* return (
-      <GiftedChat
-        messages={this.state.messages}
-        onSend={messages => this.onSend(messages)}
-        user={{
-          _id: 1,
-          name: 'Luis Correa',
-          avatar: 'https://placeimg.com/140/140/any',
-        }}
-        renderMessage={this.renderMessage}
-      />
-    ) */
-    return (
-      <GiftedChat
-        messages={this.state.messages}
-        onSend={messages => this.onSend(messages)}
-        user={{
-          _id: 1,
-          name: 'Luis Correa',
-          avatar: 'https://placeimg.com/140/140/any',
-        }}
-      />
+  determineUser(){
+    AsyncStorage.getItem(USER_ID).then((userId)=>{
+      if(!userId){
+          this.socket.emit('userJoined', null);
+          this.socket.on('userJoined', (userId)=>{
+          AsyncStorage.setItem(USER_ID, userId);
+              this.setState(userId);
+          })
+      }else{
+        this.socket.emit('userJoined', userId)
+        this.setState({userId});
+      }
+    }).catch((e) => alert(e))
+  }
+  onReceivedMessage(messages){
+    console.log('messages 2: '+JSON.stringify(messages))  
+    this._storeMessages(messages);
+  }
+  onSend(messages=[]){
+    console.log('messages: '+JSON.stringify(messages))
+    this.socket.emit('message',messages[0])
+  }
+  _storeMessages(messages){
+    //console.log('messages 3: '+JSON.stringify(messages))
+    this.setState((previousState)=>{
+      //console.log('previousState: '+JSON.stringify(previousState))
+      
+      return{
+        messages: GiftedChat.append(previousState.messages, messages)
+      }
+    })
+  }
+  render(){
+    var user = { _id: this.state.userId || -1}
+    return(
+    
+    <GiftedChat
+       messages={this.state.messages}
+       onSend={this.onSend}
+       user={user}
+       />
     )
+    
   }
+  
 }
 
-//module.exports = App
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
