@@ -1,6 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { AsyncStorage, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import AsyncStorage from "@react-native-community/async-storage";
 
 //import SocketIOClient from  'sockect.io-client'
 import io from "socket.io-client";
@@ -9,7 +10,7 @@ import { GiftedChat } from "react-native-gifted-chat";
 
 const USER_ID = "@userId";
 
-class Main extends React.Component {
+export default class Main extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -53,6 +54,16 @@ class Main extends React.Component {
     console.log("messages: " + JSON.stringify(messages));
     this.socket.emit("message", messages[0]);
   }
+  _storeMessages(messages) {
+    //console.log('messages 3: '+JSON.stringify(messages))
+    this.setState((previousState) => {
+      //console.log('previousState: '+JSON.stringify(previousState))
+
+      return {
+        messages: GiftedChat.append(previousState.messages, messages),
+      };
+    });
+  }
   render() {
     var user = { _id: this.state.userId || -1 };
     return (
@@ -62,16 +73,6 @@ class Main extends React.Component {
         user={user}
       />
     );
-  }
-  _storeMessages(messages) {
-    console.log("messages 3: " + JSON.stringify(messages));
-    this.setState((previousState) => {
-      console.log("previousState: " + JSON.stringify(previousState));
-
-      return {
-        messages: GiftedChat.append(previousState.messages, messages),
-      };
-    });
   }
 }
 
@@ -83,17 +84,3 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 });
-
-module.exports = Main;
-
-/* export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
-
-
- */
